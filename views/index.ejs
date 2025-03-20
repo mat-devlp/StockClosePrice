@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Search</title>
+    <link rel="stylesheet" href="/main.css">
+</head>
+<body>
+    
+<div id="main">
+    <div id="submain">
+        <form action="/stockSearch" method="get" id="stockForm">
+            <input type="text" value="SPY" name="stockname" id="searchInput" placeholder="Search for a stock">
+            <button type="submit" id="searchButton">Search</button>
+        </form>
+
+        <div id="stockInfo">
+            <% if (stockSymbol) { %>
+                <div id="stockName"><strong>Stock Symbol:</strong> <%= stockSymbol %></div>
+                <div id="stockClose"><strong>Close Price:</strong> <%= stockClose %></div>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
