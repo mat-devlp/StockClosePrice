@@ -1,28 +1,197 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Search</title>
-    <link rel="stylesheet" href="/main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Stock Portfolio</title>
+  <link rel="stylesheet" href="/main.css" />
 </head>
 <body>
-    
-<div id="main">
+  
+  <div id="main">
     <div id="submain">
-        <form action="/stockSearch" method="get" id="stockForm">
-            <input type="text" value="SPY" name="stockname" id="searchInput" placeholder="Search for a stock">
-            <button type="submit" id="searchButton">Search</button>
-        </form>
+      <form action="/stockSearch" method="get" id="stockForm">
+        <input type="text" value="" name="stockname" id="searchInput" placeholder="Search for a stock" />
+        <button type="submit" id="searchButton">Search</button>
+      </form>
 
-        <div id="stockInfo">
-            <% if (stockSymbol) { %>
-                <div id="stockName"><strong>Stock Symbol:</strong> <%= stockSymbol %></div>
-                <div id="stockClose"><strong>Close Price:</strong> <%= stockClose %></div>
-            <% } %>
-        </div>
+      <div id="stockInfo">
+        <% if (stockSymbol) { %>
+          <div id="stockName"><strong>Stock Symbol:</strong> <%= stockSymbol %></div>
+          <div id="stockClose"><strong>Close Price:</strong> <%= stockClose %></div>
+          <% if (stockSymbol !== "Not Found" && stockSymbol !== "Error") { %>
+            <button id="addButton">Add to Portfolio</button>
+          <% } %>
+        <% } %>
+      </div>
     </div>
-</div>
+
+    <div id="portfolio">
+      <h2>My Portfolio</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Symbol</th>
+            <th>Quantity</th>
+            <th>Buy Price</th>
+            <th>Current Price</th>
+            <th>Sell Price</th>
+            <th>Final Balance</th>
+            <th>Buy Date</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (portfolio && portfolio.length > 0) { %>
+            <% portfolio.forEach(stock => { %>
+              <tr class="<%= stock.sell_price !== null && stock.sell_price !== undefined
+                            ? (Number(stock.final_balance) > 0 ? 'positive-row'
+                            : (Number(stock.final_balance) < 0 ? 'negative-row' : ''))
+                            : '' %>">
+                <td><%= stock.symbol %></td>
+                <td><%= stock.quantity %></td>
+                <td>
+                  <% if (stock.buy_price !== null && stock.buy_price !== undefined) { %>
+                    $<%= Number(stock.buy_price).toFixed(2) %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </td>
+                <td>
+                  <% if (stock.current_price !== null && stock.current_price !== undefined) { %>
+                    $<%= Number(stock.current_price).toFixed(2) %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </td>
+                <td>
+                  <% if (stock.sell_price !== null && stock.sell_price !== undefined) { %>
+                    $<%= Number(stock.sell_price).toFixed(2) %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </td>
+                <td>
+                  <% if (stock.final_balance !== null && stock.final_balance !== undefined) { %>
+                    $<%= Number(stock.final_balance).toFixed(2) %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </td>
+                <td>
+                  <% if (stock.purchase_date) { %>
+                    <%= new Date(stock.purchase_date).toLocaleDateString('en-US') %>
+                  <% } else { %>
+                    N/A
+                  <% } %>
+                </td>
+                <td>
+                  <button class="editButton" data-stock='<%- JSON.stringify(stock) %>' title="Edit">✏️</button>
+                </td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td colspan="8">No stocks in portfolio</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Add Stock Popup -->
+  <div id="popupForm" style="display: none;">
+    <form action="/addStock" method="post" id="addStockForm">
+      <h3>Add to Portfolio</h3>
+      <label>Quantity:</label>
+      <input type="number" name="quantity" step="0.0001" required />
+
+      <label>Buy Price:</label>
+      <input type="number" step="0.01" name="buy_price" required />
+
+      <label>Buy Date:</label>
+      <input type="date" name="purchase_date" required />
+
+      <input type="hidden" name="symbol" value="<%= stockSymbol %>" />
+      <input type="hidden" name="current_price" value="<%= stockClose %>" />
+
+      <button type="submit">Confirm</button>
+      <button type="button" id="cancelPopup">Cancel</button>
+    </form>
+  </div>
+
+  <!-- Edit Stock Popup -->
+  <div id="editPopupForm" style="display: none;">
+    <form action="/editStock" method="post" id="editStockForm">
+      <h3>Edit Stock</h3>
+
+      <input type="hidden" name="id" id="edit_id" />
+
+      <label>Quantity:</label>
+      <input type="number" name="quantity" id="edit_quantity" step="0.0001" required />
+
+      <label>Buy Price:</label>
+      <input type="number" step="0.01" name="buy_price" id="edit_buy_price" required />
+
+      <label>Sell Price:</label>
+      <input type="number" step="0.01" name="sell_price" id="edit_sell_price" />
+
+      <label>Buy Date:</label>
+      <input type="date" name="purchase_date" id="edit_purchase_date" required />
+
+      <button type="submit">Save Changes</button>
+      <button type="button" id="cancelEditPopup">Cancel</button>
+    </form>
+
+    <form action="/deleteStock" method="post" id="deleteStockForm">
+      <input type="hidden" name="id" id="delete_id" />
+      <button type="submit" id="deleteButton">Delete</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      const addButton = document.getElementById("addButton");
+      const popupForm = document.getElementById("popupForm");
+      const cancelBtn = document.getElementById("cancelPopup");
+
+      if (addButton) {
+        addButton.addEventListener("click", () => {
+          popupForm.style.display = "block";
+        });
+      }
+
+      if (cancelBtn) {
+        cancelBtn.addEventListener("click", () => {
+          popupForm.style.display = "none";
+        });
+      }
+
+      const editPopup = document.getElementById("editPopupForm");
+      const cancelEdit = document.getElementById("cancelEditPopup");
+      const editButtons = document.querySelectorAll(".editButton");
+
+      editButtons.forEach(btn => {
+        btn.addEventListener("click", () => {
+          const stock = JSON.parse(btn.getAttribute("data-stock"));
+          document.getElementById("edit_id").value = stock.id;
+          document.getElementById("edit_quantity").value = stock.quantity;
+          document.getElementById("edit_buy_price").value = stock.buy_price;
+          document.getElementById("edit_sell_price").value = stock.sell_price || '';
+          document.getElementById("edit_purchase_date").value = stock.purchase_date ? stock.purchase_date.split('T')[0] : '';
+          document.getElementById("delete_id").value = stock.id;
+          editPopup.style.display = "block";
+        });
+      });
+
+      if (cancelEdit) {
+        cancelEdit.addEventListener("click", () => {
+          editPopup.style.display = "none";
+        });
+      }
+    });
+  </script>
 
 </body>
 </html>
