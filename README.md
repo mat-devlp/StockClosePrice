@@ -25,7 +25,7 @@ cd StockClosePrice
 npm install
 ```
 
-### 3️⃣ Set up PostgreSQL database
+#### 3️⃣ Set up PostgreSQL database
 Make sure PostgreSQL is running. Create a database named `postgres` (or update the connection) and run the following:
 
 ```sql
@@ -49,7 +49,7 @@ PASSWORDSQL=your_pg_password
 API_KEY=your_alpha_vantage_key
 ```
 
-## ▶️ Running the Stock Portfolio
+### ▶️ Running the Stock Portfolio
 Start the application with Nodemon:
 
 ```sh
